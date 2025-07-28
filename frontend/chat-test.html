@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能体对话测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .config-section {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .config-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .config-row label {
+            width: 100px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .config-row input, .config-row select {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .config-row button {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .config-row button:hover {
+            background: #5a6fd8;
+        }
+
+        .chat-section {
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .chat-messages {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 12px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message.user {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.ai {
+            background: white;
+            border: 1px solid #eee;
+            margin-right: auto;
+        }
+
+        .message.system {
+            background: #ffeaa7;
+            text-align: center;
+            margin: 0 auto;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .message.error {
+            background: #ff7675;
+            color: white;
+            text-align: center;
+            margin: 0 auto;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .input-area button {
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+
+        .input-area button:hover:not(:disabled) {
+            background: #5a6fd8;
+        }
+
+        .input-area button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .quick-btn {
+            padding: 6px 12px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 智能体对话测试</h1>
+            <p>基于百度千帆API的智能体对话功能</p>
+        </div>
+
+        <div class="config-section">
+            <div class="config-row">
+                <label>API地址:</label>
+                <input type="text" id="apiUrl" value="http://localhost:8000" placeholder="FastAPI服务地址">
+                <button onclick="testConnection()">测试连接</button>
+            </div>
+            <div class="config-row">
+                <label>Token:</label>
+                <input type="password" id="token" placeholder="百度千帆API Token (可选)">
+            </div>
+            <div class="config-row">
+                <label>App ID:</label>
+                <input type="text" id="appId" value="ac6acc7c-9e7c-4909-8bc0-5ca667a5e0b6" placeholder="应用ID">
+            </div>
+            <div class="config-row">
+                <label>对话模式:</label>
+                <select id="chatMode">
+                    <option value="manual">手动管理</option>
+                    <option value="quick" selected>快速对话</option>
+                </select>
+                <button onclick="createConversation()" id="createConvBtn">创建对话</button>
+            </div>
+        </div>
+
+        <div class="chat-section">
+            <div class="quick-actions">
+                <div class="quick-btn" onclick="sendQuickMessage('你好，请介绍一下你自己')">自我介绍</div>
+                <div class="quick-btn" onclick="sendQuickMessage('今天天气怎么样？')">询问天气</div>
+                <div class="quick-btn" onclick="sendQuickMessage('帮我写一首诗')">写诗</div>
+                <div class="quick-btn" onclick="sendQuickMessage('解释一下人工智能')">解释AI</div>
+                <div class="quick-btn" onclick="clearChat()">清空对话</div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message system">欢迎使用智能体对话测试！请先测试API连接，然后开始对话。</div>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="输入您的消息..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()" id="sendBtn">发送</button>
+            </div>
+        </div>
+
+        <div class="status" id="status">
+            状态：未连接
+        </div>
+    </div>
+
+    <script>
+        let currentConversationId = null;
+        let isConnected = false;
+
+        // 测试API连接
+        async function testConnection() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const statusElement = document.getElementById('status');
+            
+            try {
+                statusElement.innerHTML = '<span class="loading"></span> 正在测试连接...';
+                statusElement.className = 'status';
+                
+                const response = await fetch(`${apiUrl}/api/chat/test`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    isConnected = true;
+                    statusElement.textContent = `✅ 连接成功：${data.message}`;
+                    statusElement.className = 'status connected';
+                    addMessage('system', '✅ API连接成功！可以开始对话了。');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                isConnected = false;
+                statusElement.textContent = `❌ 连接失败：${error.message}`;
+                statusElement.className = 'status error';
+                addMessage('error', `连接失败：${error.message}`);
+            }
+        }
+
+        // 创建对话
+        async function createConversation() {
+            if (!isConnected) {
+                addMessage('error', '请先测试API连接');
+                return;
+            }
+
+            const apiUrl = document.getElementById('apiUrl').value;
+            const token = document.getElementById('token').value;
+            const appId = document.getElementById('appId').value;
+            
+            try {
+                addMessage('system', '正在创建对话...');
+                
+                const response = await fetch(`${apiUrl}/api/chat/conversation`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        app_id: appId,
+                        token: token || undefined
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    currentConversationId = data.data.conversation_id;
+                    addMessage('system', `✅ 对话创建成功！ID: ${currentConversationId}`);
+                    document.getElementById('createConvBtn').textContent = '重新创建';
+                } else {
+                    throw new Error(data.error || '创建对话失败');
+                }
+            } catch (error) {
+                addMessage('error', `创建对话失败：${error.message}`);
+            }
+        }
+
+        // 发送消息
+        async function sendMessage(message = null) {
+            const messageInput = document.getElementById('messageInput');
+            const text = message || messageInput.value.trim();
+            
+            if (!text) return;
+            
+            if (!isConnected) {
+                addMessage('error', '请先测试API连接');
+                return;
+            }
+
+            const chatMode = document.getElementById('chatMode').value;
+            const apiUrl = document.getElementById('apiUrl').value;
+            const token = document.getElementById('token').value;
+            const appId = document.getElementById('appId').value;
+            const sendBtn = document.getElementById('sendBtn');
+
+            // 添加用户消息到界面
+            addMessage('user', text);
+            messageInput.value = '';
+            
+            // 禁用发送按钮
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<span class="loading"></span> 发送中...';
+
+            try {
+                let response, data;
+                
+                if (chatMode === 'quick') {
+                    // 快速对话模式
+                    response = await fetch(`${apiUrl}/api/chat/quick-chat`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            app_id: appId,
+                            message: text,
+                            token: token || undefined
+                        })
+                    });
+                } else {
+                    // 手动管理模式
+                    if (!currentConversationId) {
+                        addMessage('error', '请先创建对话');
+                        return;
+                    }
+                    
+                    response = await fetch(`${apiUrl}/api/chat/message`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            app_id: appId,
+                            conversation_id: currentConversationId,
+                            message: text,
+                            token: token || undefined
+                        })
+                    });
+                }
+
+                data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // 提取AI回复
+                    let aiReply;
+                    if (chatMode === 'quick') {
+                        // 更新对话ID
+                        currentConversationId = data.data.conversation.conversation_id;
+                        aiReply = data.data.message_response;
+                    } else {
+                        aiReply = data.data;
+                    }
+                    
+                    // 格式化并显示AI回复
+                    const formattedReply = typeof aiReply === 'object' ? 
+                        JSON.stringify(aiReply, null, 2) : aiReply;
+                    addMessage('ai', formattedReply);
+                } else {
+                    throw new Error(data.error || '发送消息失败');
+                }
+            } catch (error) {
+                addMessage('error', `发送失败：${error.message}`);
+            } finally {
+                // 恢复发送按钮
+                sendBtn.disabled = false;
+                sendBtn.textContent = '发送';
+                messageInput.focus();
+            }
+        }
+
+        // 快速发送消息
+        function sendQuickMessage(message) {
+            document.getElementById('messageInput').value = message;
+            sendMessage();
+        }
+
+        // 添加消息到聊天界面
+        function addMessage(type, content) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            if (type === 'ai' && content.includes('\n')) {
+                // 保持换行格式
+                messageDiv.style.whiteSpace = 'pre-wrap';
+            }
+            
+            messageDiv.textContent = content;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // 清空对话
+        function clearChat() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '<div class="message system">对话已清空</div>';
+            currentConversationId = null;
+            document.getElementById('createConvBtn').textContent = '创建对话';
+        }
+
+        // 处理回车键
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // 页面加载时自动测试连接
+        window.addEventListener('load', () => {
+            setTimeout(testConnection, 500);
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>球球terra - 管理面板</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: #4a9eff;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .content {
+            padding: 30px;
+        }
+        .status-card {
+            background: #f8f9fa;
+            border-left: 4px solid #4a9eff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .status-card.error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .status-card.success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .status-card h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-indicator.online {
+            background: #28a745;
+        }
+        .status-indicator.offline {
+            background: #dc3545;
+        }
+        .status-indicator.unknown {
+            background: #ffc107;
+        }
+        .button {
+            display: inline-block;
+            background: #4a9eff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #3d8bfd;
+        }
+        .button.danger {
+            background: #dc3545;
+        }
+        .button.danger:hover {
+            background: #c82333;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .data-table th {
+            background: #f8f9fa;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .nav-links {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .nav-links a {
+            color: #4a9eff;
+            text-decoration: none;
+            margin: 0 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 球球terra 管理面板</h1>
+            <p>AI服务状态与数据库管理</p>
+        </div>
+        
+        <div class="content">
+            <div class="status-card" id="ai-status">
+                <h3><span class="status-indicator unknown"></span>AI服务状态</h3>
+                <div class="loading">正在检查AI服务状态...</div>
+            </div>
+            
+            <div class="status-card" id="db-status">
+                <h3><span class="status-indicator unknown"></span>数据库状态</h3>
+                <div class="loading">正在加载数据库信息...</div>
+            </div>
+            
+            <div class="status-card">
+                <h3>🔧 管理操作</h3>
+                <button class="button" onclick="testAI()">测试AI连接</button>
+                <button class="button" onclick="refreshData()">刷新数据</button>
+                <button class="button" onclick="clearConversations()" class="button danger">清空对话记录</button>
+            </div>
+            
+            <div class="status-card">
+                <h3>📊 对话统计</h3>
+                <div id="stats-content" class="loading">正在加载统计信息...</div>
+            </div>
+            
+            <div class="status-card">
+                <h3>💬 最近对话</h3>
+                <div id="conversations-content" class="loading">正在加载对话记录...</div>
+            </div>
+            
+            <div class="nav-links">
+                <a href="index.html">🏠 返回主页</a>
+                <a href="/api/docs" target="_blank">📖 API文档</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = {};
+
+        async function fetchData() {
+            try {
+                // 获取健康状态
+                const healthResponse = await fetch('/api/health');
+                const healthData = await healthResponse.json();
+                currentData.health = healthData;
+                
+                // 获取AI测试状态
+                const aiResponse = await fetch('/api/test-ai');
+                const aiData = await aiResponse.json();
+                currentData.ai = aiData;
+                
+                // 获取统计信息
+                const statsResponse = await fetch('/api/conversations/stats');
+                const statsData = await statsResponse.json();
+                currentData.stats = statsData;
+                
+                // 获取最近对话
+                const conversationsResponse = await fetch('/api/conversations?limit=10');
+                const conversationsData = await conversationsResponse.json();
+                currentData.conversations = conversationsData;
+                
+                updateUI();
+            } catch (error) {
+                console.error('获取数据失败:', error);
+                showError('获取服务状态失败，请检查后端服务是否启动');
+            }
+        }
+
+        function updateUI() {
+            updateAIStatus();
+            updateDBStatus();
+            updateStats();
+            updateConversations();
+        }
+
+        function updateAIStatus() {
+            const statusCard = document.getElementById('ai-status');
+            const indicator = statusCard.querySelector('.status-indicator');
+            const content = statusCard.querySelector('div');
+            
+            if (currentData.ai) {
+                if (currentData.ai.ai_configured) {
+                    statusCard.className = 'status-card success';
+                    indicator.className = 'status-indicator online';
+                    content.innerHTML = `
+                        <p>✅ AI智能体连接正常</p>
+                        <p>服务类型: 百度千帆大模型</p>
+                        <p>状态: ${currentData.ai.message}</p>
+                    `;
+                } else {
+                    statusCard.className = 'status-card error';
+                    indicator.className = 'status-indicator offline';
+                    content.innerHTML = `
+                        <p>❌ AI智能体未配置</p>
+                        <p>错误: ${currentData.ai.message}</p>
+                        <p>请运行: <code>cd backend && python setup_ai.py</code></p>
+                    `;
+                }
+            }
+        }
+
+        function updateDBStatus() {
+            const statusCard = document.getElementById('db-status');
+            const indicator = statusCard.querySelector('.status-indicator');
+            const content = statusCard.querySelector('div');
+            
+            if (currentData.health) {
+                statusCard.className = 'status-card success';
+                indicator.className = 'status-indicator online';
+                content.innerHTML = `
+                    <p>✅ 数据库连接正常</p>
+                    <p>类型: SQLite</p>
+                    <p>状态: ${currentData.health.database}</p>
+                `;
+            }
+        }
+
+        function updateStats() {
+            const content = document.getElementById('stats-content');
+            
+            if (currentData.stats) {
+                content.innerHTML = `
+                    <p><strong>总消息数:</strong> ${currentData.stats.total_messages}</p>
+                    <p><strong>独立对话数:</strong> ${currentData.stats.unique_conversations}</p>
+                    <p><strong>AI模式:</strong> ${currentData.stats.ai_mode === 'local' ? '本地测试' : 'AI智能体'}</p>
+                `;
+            }
+        }
+
+        function updateConversations() {
+            const content = document.getElementById('conversations-content');
+            
+            if (currentData.conversations && currentData.conversations.conversations) {
+                if (currentData.conversations.conversations.length === 0) {
+                    content.innerHTML = '<p>暂无对话记录</p>';
+                    return;
+                }
+                
+                let tableHTML = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>用户消息</th>
+                                <th>AI回复</th>
+                                <th>对话ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                currentData.conversations.conversations.forEach(conv => {
+                    const timestamp = new Date(conv.timestamp).toLocaleString();
+                    tableHTML += `
+                        <tr>
+                            <td>${timestamp}</td>
+                            <td>${conv.user_message}</td>
+                            <td>${conv.bot_response.substring(0, 100)}${conv.bot_response.length > 100 ? '...' : ''}</td>
+                            <td>${conv.conversation_id}</td>
+                        </tr>
+                    `;
+                });
+                
+                tableHTML += '</tbody></table>';
+                content.innerHTML = tableHTML;
+            }
+        }
+
+        async function testAI() {
+            try {
+                const response = await fetch('/api/test-ai');
+                const data = await response.json();
+                
+                if (data.ai_configured) {
+                    alert('✅ AI连接测试成功！\n' + data.message);
+                } else {
+                    alert('❌ AI连接测试失败！\n' + data.message);
+                }
+                
+                // 刷新数据
+                await fetchData();
+            } catch (error) {
+                alert('❌ 测试失败: ' + error.message);
+            }
+        }
+
+        async function refreshData() {
+            await fetchData();
+            alert('✅ 数据已刷新');
+        }
+
+        async function clearConversations() {
+            if (!confirm('确定要清空所有对话记录吗？此操作不可恢复！')) {
+                return;
+            }
+            
+            alert('❌ 清空功能暂未实现，如需清空请删除数据库文件 backend/terra.db');
+        }
+
+        function showError(message) {
+            document.getElementById('ai-status').innerHTML = `
+                <h3><span class="status-indicator offline"></span>服务错误</h3>
+                <div style="color: red;">${message}</div>
+            `;
+        }
+
+        // 页面加载时获取数据
+        document.addEventListener('DOMContentLoaded', fetchData);
+        
+        // 每30秒自动刷新状态
+        setInterval(fetchData, 30000);
+    </script>
+</body>
+</html> 

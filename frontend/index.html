@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <title>球球terra - 地球科学科普智能体</title>
+    <meta name="description" content="球球terra是一个互动的3D地球科学科普智能体，带你探索地球的奥秘">
+    <meta name="theme-color" content="#4a9eff">
+    
+    <!-- 添加favicon -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    
+    <!-- PWA支持 -->
+    <link rel="manifest" href="/manifest.json">
+    <!-- <link rel="apple-touch-icon" sizes="192x192" href="icon-192x192.png"> -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="球球terra">
+    
+    <link rel="stylesheet" href="style.css?v=3.0">
+</head>
+<body>
+    <div id="container">
+        <div id="loading">
+            <div class="loading-spinner"></div>
+            <p>加载地球中...</p>
+        </div>
+        
+        <!-- 信息面板控制按钮 -->
+        <div id="info-toggle" class="info-toggle" onclick="toggleInfoPanel()">
+            <span class="info-icon">ℹ️</span>
+            <span class="info-text">信息</span>
+        </div>
+        
+        <div id="info-panel" class="hidden">
+            <h1>🌍 球球terra</h1>
+            <p class="subtitle">地球科学科普智能体</p>
+            
+            <!-- 新增: 地标搜索框 -->
+            <div class="landmark-search">
+                <input type="text" id="landmark-search" placeholder="搜索地标..." />
+                <button onclick="searchLandmarks()">🔍</button>
+            </div>
+            
+            <div class="controls-info" id="controls-info">
+                <p><strong>操作说明：</strong></p>
+                <div id="desktop-controls">
+                    <p>🖱️ 鼠标拖拽：旋转视角</p>
+                    <p>🎯 滚轮：缩放</p>
+                    <p>🖱️ 右键拖拽：平移视角</p>
+                    <p>🌍 地球会自动自转</p>
+                </div>
+                <div id="mobile-controls" style="display: none;">
+                    <p>👆 双指捏合：缩放地球</p>
+                    <p>🌍 地球会自动自转</p>
+                </div>
+                <p>📍 点击标记：查看详情</p>
+            </div>
+            <div class="location-info">
+                <p><strong>当前坐标：</strong></p>
+                <p id="coordinates">经度: 0°, 纬度: 0°</p>
+            </div>
+            <div class="landmarks-toggle">
+                <button id="landmarks-btn" onclick="toggleLandmarksList()">🗺️ 地标列表</button>
+                <button id="reset-btn" onclick="resetView()">🔄 重置视角</button>
+            </div>
+        </div>
+        
+        <div id="landmarks-panel" class="hidden">
+            <h3>🌍 全球地标</h3>
+            <div id="landmarks-list">
+                <!-- 地标列表将通过JavaScript动态生成 -->
+            </div>
+        </div>
+        
+        <!-- 聊天按钮 -->
+        <div id="chat-toggle" class="chat-toggle" onclick="toggleChat()">
+            <span class="chat-icon">🤖</span>
+            <span class="chat-text">聊天</span>
+        </div>
+        
+        <!-- 聊天框 -->
+        <div id="chat-panel" class="chat-panel hidden">
+            <div class="chat-header">
+                <div class="chat-title">
+                    <span class="chat-avatar">🌍</span>
+                    <div>
+                        <h3>球球terra</h3>
+                        <p class="chat-subtitle">地球科学专家</p>
+                    </div>
+                </div>
+                <button class="chat-close" onclick="toggleChat()">×</button>
+            </div>
+            <div id="chat-messages" class="chat-messages">
+                <div class="message bot-message">
+                    <div class="message-avatar">🌍</div>
+                    <div class="message-content">
+                        <p>嗨，我是球球Terra！🌏✨<br>
+                        你好奇的地球探险向导来了！想知道地震为什么会发生？台风是怎么转起来的？还是想看看世界各地的奇特地貌？<br>
+                        从地心的秘密到大气层的奥秘，从喜马拉雅山脉到马里亚纳海沟，我都能带你去探索！<br>
+                        快告诉我，今天想去地球的哪个角落冒险呢？🗺️</p>
+                        <div class="recommended-questions">
+                            <button class="question-btn" onclick="askRecommendedQuestion('为什么地球有磁场？没有磁场会怎样？')">🧲 为什么地球有磁场？没有磁场会怎样？</button>
+                            <button class="question-btn" onclick="askRecommendedQuestion('为什么会发生地震？地震能预测吗？')">🌋 为什么会发生地震？地震能预测吗？</button>
+                            <button class="question-btn" onclick="askRecommendedQuestion('地球系统是否具有自我调节能力？盖亚假说有道理吗？')">🌍 地球系统是否具有自我调节能力？盖亚假说有道理吗？</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <input type="text" id="chat-input" placeholder="输入你的问题..." maxlength="500">
+                    <button id="send-btn" onclick="sendMessage()" disabled>
+                        <span class="send-icon">📤</span>
+                    </button>
+                </div>
+                <div class="chat-status" id="chat-status"></div>
+                <div class="chat-controls">
+                    <button class="control-btn" onclick="clearChat()" title="清除聊天历史">🗑️ 清除历史</button>
+                    <button class="control-btn" onclick="resetConversation()" title="重置对话(获取新ID)">🔄 重置对话</button>
+                    <button class="control-btn" onclick="checkConversationStatus()" title="检查对话状态">📊 检查状态</button>
+                </div>
+            </div>
+        </div>
+        
+        <canvas id="earth-canvas"></canvas>
+    </div>
+
+    <!-- 使用本地Three.js文件 -->
+    <script src="three.min.js"></script>
+    
+    <!-- 检查是否成功加载THREE，如果失败则尝试CDN -->
+    <script>
+        if (typeof THREE === 'undefined') {
+            console.log('本地Three.js加载失败，尝试CDN...');
+            document.write('<script src="https://unpkg.com/three@0.150.1/build/three.min.js"><\/script>');
+        } else {
+            console.log('Three.js 加载成功 (本地版本)', THREE.REVISION);
+        }
+    </script>
+    
+    <!-- OrbitControls -->
+    <script>
+        // 手动添加OrbitControls代码，避免CDN问题
+        if (typeof THREE !== 'undefined') {
+            // 定义触摸常量
+            THREE.TOUCH = {
+                ROTATE: 0,
+                PAN: 1,
+                DOLLY_PAN: 2,
+                DOLLY_ROTATE: 3,
+                DOLLY: 4  // 纯缩放
+            };
+            
+            // 简化版OrbitControls
+            THREE.OrbitControls = function ( object, domElement ) {
+                this.object = object;
+                this.domElement = domElement;
+                this.enabled = true;
+                this.target = new THREE.Vector3();
+                this.enableZoom = true;
+                this.enableRotate = true;
+                this.enablePan = true;
+                this.enableDamping = false;
+                this.dampingFactor = 0.05;
+                this.minDistance = 0;
+                this.maxDistance = Infinity;
+                this.minPolarAngle = 0;
+                this.maxPolarAngle = Math.PI;
+                this.autoRotate = false;
+                this.autoRotateSpeed = 0;
+                
+                // 触摸控制设置
+                this.touches = {
+                    ONE: THREE.TOUCH.ROTATE,
+                    TWO: THREE.TOUCH.DOLLY_PAN
+                };
+                
+                // 简化的实现
+                let scope = this;
+                let isUserInteracting = false;
+                let rotateStart = new THREE.Vector2();
+                let rotateEnd = new THREE.Vector2();
+                let rotateDelta = new THREE.Vector2();
+                
+                // 触摸变量
+                let touchZoomDistanceStart = 0;
+                let touchZoomDistanceEnd = 0;
+                
+                this.update = function() {
+                    // 不再使用autoRotate，地球自转由animate函数控制
+                };
+                
+                this.addEventListener = function(type, listener) {};
+                this.reset = function() {};
+                
+                // 鼠标事件
+                if (this.enableRotate) {
+                    this.domElement.addEventListener('mousedown', onMouseDown, false);
+                }
+                if (this.enableZoom) {
+                    this.domElement.addEventListener('wheel', onMouseWheel, false);
+                }
+                
+                // 触摸事件
+                this.domElement.addEventListener('touchstart', onTouchStart, { passive: false });
+                this.domElement.addEventListener('touchmove', onTouchMove, { passive: false });
+                this.domElement.addEventListener('touchend', onTouchEnd, { passive: false });
+                
+                function onMouseDown(event) {
+                    if (!scope.enableRotate) return;
+                    isUserInteracting = true;
+                    document.addEventListener('mousemove', onMouseMove, false);
+                    document.addEventListener('mouseup', onMouseUp, false);
+                }
+                
+                function onMouseMove(event) {
+                    if (!isUserInteracting || !scope.enableRotate) return;
+                    scope.object.rotation.y += event.movementX * 0.01;
+                    scope.object.rotation.x += event.movementY * 0.01;
+                    scope.object.rotation.x = Math.max(-1.5, Math.min(1.5, scope.object.rotation.x));
+                }
+                
+                function onMouseUp() {
+                    isUserInteracting = false;
+                    document.removeEventListener('mousemove', onMouseMove, false);
+                    document.removeEventListener('mouseup', onMouseUp, false);
+                }
+                
+                function onMouseWheel(event) {
+                    if (!scope.enableZoom) return;
+                    event.preventDefault();
+                    let distance = scope.object.position.length();
+                    distance += event.deltaY * 0.01;
+                    distance = Math.max(scope.minDistance, Math.min(scope.maxDistance, distance));
+                    scope.object.position.normalize().multiplyScalar(distance);
+                }
+                
+                function onTouchStart(event) {
+                    event.preventDefault();
+                    
+                    if (event.touches.length === 1) {
+                        // 单指操作 - 根据设置决定是否允许旋转
+                        if (scope.touches.ONE === THREE.TOUCH.ROTATE && scope.enableRotate) {
+                            isUserInteracting = true;
+                        }
+                    } else if (event.touches.length === 2) {
+                        // 双指操作 - 缩放
+                        if (scope.enableZoom) {
+                            isUserInteracting = true;
+                            const dx = event.touches[0].pageX - event.touches[1].pageX;
+                            const dy = event.touches[0].pageY - event.touches[1].pageY;
+                            touchZoomDistanceEnd = touchZoomDistanceStart = Math.sqrt(dx * dx + dy * dy);
+                        }
+                    }
+                }
+                
+                function onTouchMove(event) {
+                    event.preventDefault();
+                    
+                    if (event.touches.length === 1) {
+                        // 单指旋转（如果启用）
+                        if (scope.touches.ONE === THREE.TOUCH.ROTATE && scope.enableRotate && isUserInteracting) {
+                            const touch = event.touches[0];
+                            scope.object.rotation.y += (touch.clientX - (rotateStart.x || touch.clientX)) * 0.01;
+                            scope.object.rotation.x += (touch.clientY - (rotateStart.y || touch.clientY)) * 0.01;
+                            scope.object.rotation.x = Math.max(-1.5, Math.min(1.5, scope.object.rotation.x));
+                            rotateStart.set(touch.clientX, touch.clientY);
+                        }
+                    } else if (event.touches.length === 2) {
+                        // 双指缩放
+                        if (scope.enableZoom && isUserInteracting) {
+                            const dx = event.touches[0].pageX - event.touches[1].pageX;
+                            const dy = event.touches[0].pageY - event.touches[1].pageY;
+                            touchZoomDistanceEnd = Math.sqrt(dx * dx + dy * dy);
+                            
+                            const factor = touchZoomDistanceStart / touchZoomDistanceEnd;
+                            let distance = scope.object.position.length() * factor;
+                            distance = Math.max(scope.minDistance, Math.min(scope.maxDistance, distance));
+                            scope.object.position.normalize().multiplyScalar(distance);
+                            
+                            touchZoomDistanceStart = touchZoomDistanceEnd;
+                        }
+                    }
+                }
+                
+                function onTouchEnd(event) {
+                    event.preventDefault();
+                    isUserInteracting = false;
+                    touchZoomDistanceStart = 0;
+                    touchZoomDistanceEnd = 0;
+                    rotateStart.set(0, 0);
+                }
+            };
+        }
+    </script>
+    
+    <script src="script.js?v=3.1"></script>
+    <script src="chat.js?v=1.0"></script>
+    
+    <!-- PWA注册 -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('SW注册成功: ', registration.scope);
+                    })
+                    .catch(function(registrationError) {
+                        console.log('SW注册失败: ', registrationError);
+                    });
+            });
+        }
+    </script>
+    
+    <!-- 百度千帆嵌入式聊天组件 -->
+    <script src="https://agi-dev-platform-web.bj.bcebos.com/ai_apaas/embed/output/embedLiteSDK.js?responseExpires=0"></script>
+    <script>
+        // 初始化并保存嵌入式组件实例到全局变量
+        window.qianfanEmbed = new EmbedLiteSDK({
+            appId: 'ac6acc7c-9e7c-4909-8bc0-5ca667a5e0b6', 
+            code: 'embedYO03B4h0DeIkQbu5UHQI'
+        });
+        
+        // 监听嵌入式组件加载完成
+        document.addEventListener('embedLiteReady', function(e) {
+            console.log('嵌入式聊天组件加载完成');
+        });
+    </script>
+</body>
+</html> 

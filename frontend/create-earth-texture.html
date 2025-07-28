@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生成地球纹理</title>
+</head>
+<body>
+    <h2>地球纹理生成器</h2>
+    <canvas id="earthTexture" width="1024" height="512" style="border: 1px solid #ccc; max-width: 100%;"></canvas>
+    <br><br>
+    <button onclick="downloadTexture()">下载地球纹理</button>
+    <p>生成的地球纹理可以保存为 earth_texture.jpg，然后在本地使用，避免CORS问题。</p>
+
+    <script>
+        const canvas = document.getElementById('earthTexture');
+        const ctx = canvas.getContext('2d');
+
+        // 创建高质量地球纹理
+        function createEarthTexture() {
+            // 创建海洋背景
+            const oceanGradient = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, canvas.width/2);
+            oceanGradient.addColorStop(0, '#4169E1');
+            oceanGradient.addColorStop(0.5, '#1E90FF');
+            oceanGradient.addColorStop(1, '#191970');
+            
+            ctx.fillStyle = oceanGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制大陆
+            drawContinents();
+            
+            // 添加细节
+            addDetails();
+        }
+
+        function drawContinents() {
+            // 亚洲
+            ctx.fillStyle = '#228B22';
+            drawContinent(580, 160, 180, 120);
+            drawContinent(620, 200, 140, 80);
+            
+            // 欧洲
+            ctx.fillStyle = '#32CD32';
+            drawContinent(450, 140, 80, 70);
+            
+            // 非洲
+            ctx.fillStyle = '#DAA520';
+            drawContinent(480, 240, 80, 160);
+            
+            // 北美洲
+            ctx.fillStyle = '#8FBC8F';
+            drawContinent(200, 160, 120, 100);
+            drawContinent(160, 180, 100, 80);
+            
+            // 南美洲
+            ctx.fillStyle = '#9ACD32';
+            drawContinent(280, 280, 60, 140);
+            
+            // 澳洲
+            ctx.fillStyle = '#CD853F';
+            drawContinent(760, 340, 100, 60);
+            
+            // 格陵兰
+            ctx.fillStyle = '#F0F8FF';
+            drawContinent(350, 80, 60, 80);
+            
+            // 南极洲
+            ctx.fillStyle = '#F0F8FF';
+            ctx.fillRect(0, 420, canvas.width, 92);
+        }
+
+        function drawContinent(x, y, width, height) {
+            ctx.beginPath();
+            ctx.ellipse(x, y, width/2, height/2, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // 添加细节
+            for (let i = 0; i < 8; i++) {
+                const offsetX = (Math.random() - 0.5) * width * 0.8;
+                const offsetY = (Math.random() - 0.5) * height * 0.8;
+                const size = Math.random() * 20 + 5;
+                ctx.beginPath();
+                ctx.ellipse(x + offsetX, y + offsetY, size, size, 0, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+
+        function addDetails() {
+            // 添加山脉
+            ctx.fillStyle = '#006400';
+            addMountains();
+            
+            // 添加云层
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            addClouds();
+            
+            // 添加冰川
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            addIceCaps();
+        }
+
+        function addMountains() {
+            // 喜马拉雅山脉
+            drawMountainRange(620, 200, 100, 20);
+            // 安第斯山脉
+            drawMountainRange(300, 300, 20, 120);
+            // 洛基山脉
+            drawMountainRange(180, 180, 30, 80);
+            // 阿尔卑斯山脉
+            drawMountainRange(480, 180, 50, 20);
+        }
+
+        function drawMountainRange(x, y, width, height) {
+            for (let i = 0; i < 15; i++) {
+                const offsetX = (Math.random() - 0.5) * width;
+                const offsetY = (Math.random() - 0.5) * height;
+                const size = Math.random() * 8 + 3;
+                ctx.beginPath();
+                ctx.ellipse(x + offsetX, y + offsetY, size, size, 0, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+
+        function addClouds() {
+            for (let i = 0; i < 40; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const radius = Math.random() * 30 + 10;
+                ctx.beginPath();
+                ctx.ellipse(x, y, radius, radius * 0.6, 0, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+
+        function addIceCaps() {
+            // 北极
+            ctx.fillRect(0, 0, canvas.width, 40);
+            // 格陵兰加强
+            ctx.beginPath();
+            ctx.ellipse(350, 80, 40, 60, 0, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        function downloadTexture() {
+            const link = document.createElement('a');
+            link.download = 'earth_texture.jpg';
+            link.href = canvas.toDataURL('image/jpeg', 0.9);
+            link.click();
+        }
+
+        // 页面加载时生成纹理
+        createEarthTexture();
+    </script>
+</body>
+</html> 

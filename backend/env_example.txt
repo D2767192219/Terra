@@ -1,0 +1,23 @@
+# 百度千帆API配置示例
+# 请复制此文件为 .env 并填入您的实际配置信息
+# 
+# 获取配置信息：
+# 1. 访问 https://console.bce.baidu.com/qianfan/overview
+# 2. 创建应用并获取应用ID
+# 3. 获取API密钥作为授权令牌
+
+# 应用ID - 从个人空间-应用-应用ID获取
+QIANFAN_APP_ID=your-app-id-here
+
+# 授权令牌 - 从应用工作台获取的密钥
+QIANFAN_TOKEN=your-bearer-token-here
+
+# API基础URL（通常不需要修改）
+QIANFAN_API_BASE_URL=https://qianfan.baidubce.com
+
+# 服务器配置
+HOST=0.0.0.0
+PORT=8000
+
+# 日志级别
+LOG_LEVEL=INFO 

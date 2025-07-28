@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f0f0f0;
+        }
+        .test-item {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            font-weight: bold;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+    </style>
+</head>
+<body>
+    <h1>🌍 球球terra 测试页面</h1>
+    
+    <div class="test-item">
+        <h3>1. 基础连接测试</h3>
+        <p class="status success">✅ 如果您能看到这个页面，说明HTTP服务器工作正常</p>
+        <p>访问地址: <code>http://localhost:8080/test.html</code></p>
+    </div>
+    
+    <div class="test-item">
+        <h3>2. Three.js CDN测试</h3>
+        <p id="threejs-status" class="status warning">⏳ 正在检测Three.js...</p>
+    </div>
+    
+    <div class="test-item">
+        <h3>3. 网络连接测试</h3>
+        <p id="network-status" class="status warning">⏳ 正在测试网络连接...</p>
+    </div>
+    
+    <div class="test-item">
+        <h3>4. 快速访问</h3>
+        <p><a href="index.html" style="color: #4a9eff; text-decoration: none;">🚀 访问主应用</a></p>
+    </div>
+
+    <script src="three.min.js"></script>
+    
+    <script>
+        // 测试Three.js加载
+        setTimeout(() => {
+            const threejsStatus = document.getElementById('threejs-status');
+            if (typeof THREE !== 'undefined') {
+                threejsStatus.innerHTML = '✅ Three.js 加载成功 (版本: ' + THREE.REVISION + ')';
+                threejsStatus.className = 'status success';
+            } else {
+                threejsStatus.innerHTML = '❌ Three.js 加载失败，可能是网络问题';
+                threejsStatus.className = 'status error';
+            }
+        }, 2000);
+        
+        // 测试网络连接
+        fetch('https://cdnjs.cloudflare.com/ajax/libs/three.js/r150/three.min.js')
+            .then(response => {
+                const networkStatus = document.getElementById('network-status');
+                if (response.ok) {
+                    networkStatus.innerHTML = '✅ 网络连接正常，可以访问CDN';
+                    networkStatus.className = 'status success';
+                } else {
+                    networkStatus.innerHTML = '⚠️ CDN响应异常';
+                    networkStatus.className = 'status warning';
+                }
+            })
+            .catch(error => {
+                const networkStatus = document.getElementById('network-status');
+                networkStatus.innerHTML = '❌ 网络连接失败，无法访问CDN: ' + error.message;
+                networkStatus.className = 'status error';
+            });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,1749 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+    overflow: hidden;
+    color: white;
+}
+
+#container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+}
+
+#earth-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    /* 优化高DPI屏幕显示 */
+    image-rendering: crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+
+#earth-canvas:active {
+    cursor: grabbing;
+}
+
+/* 加载动画 */
+#loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 2rem;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+}
+
+#loading.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid #4a9eff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 信息面板控制按钮样式 */
+.info-toggle {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: linear-gradient(135deg, #4a9eff, #357abd);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(74, 158, 255, 0.4);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.info-toggle:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 25px rgba(74, 158, 255, 0.6);
+}
+
+.info-toggle.active {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4);
+}
+
+.info-icon {
+    font-size: 1.2rem;
+}
+
+.info-text {
+    font-family: inherit;
+}
+
+/* 信息面板 */
+#info-panel {
+    position: absolute;
+    top: 80px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 1.5rem;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-width: 300px;
+    z-index: 100;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    transform: translateY(-10px);
+    opacity: 0;
+}
+
+#info-panel:not(.hidden) {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+#info-panel.hidden {
+    transform: translateY(-10px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+#info-panel h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #4a9eff;
+    text-shadow: 0 0 10px rgba(74, 158, 255, 0.5);
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 1rem;
+    font-style: italic;
+}
+
+.controls-info, .location-info {
+    margin-bottom: 1rem;
+}
+
+.controls-info p, .location-info p {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.controls-info p:first-child, .location-info p:first-child {
+    color: #4a9eff;
+    font-weight: bold;
+}
+
+#coordinates {
+    font-family: 'Courier New', monospace;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.5rem;
+    border-radius: 5px;
+    border-left: 3px solid #4a9eff;
+}
+
+.landmarks-toggle {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+#landmarks-btn, #reset-btn {
+    padding: 8px 15px;
+    background-color: rgba(0, 140, 255, 0.8);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    flex-grow: 1;
+}
+
+#landmarks-btn:hover, #reset-btn:hover {
+    background-color: rgba(0, 120, 220, 0.9);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 地标搜索样式 */
+.landmark-search {
+    margin: 0.5rem 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.landmark-search input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    color: white;
+    font-size: 0.9rem;
+}
+
+.landmark-search button {
+    background: rgba(0, 150, 255, 0.6);
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 0.7rem;
+    color: white;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.3s;
+}
+
+.landmark-search button:hover {
+    background: rgba(0, 150, 255, 0.8);
+}
+
+/* 搜索结果弹窗 */
+.search-results {
+    position: fixed;
+    top: 80px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    color: white;
+    z-index: 1000;
+    max-width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    transform: translateY(-10px);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.search-results.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.search-results h3 {
+    margin-top: 0;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    color: #4a9eff;
+}
+
+.search-results ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.search-results li {
+    padding: 0.6rem 0.5rem;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background 0.2s;
+}
+
+.search-results li:hover {
+    background: rgba(74, 158, 255, 0.2);
+    border-radius: 4px;
+}
+
+.search-results li .result-name {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.search-results li .result-desc {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.search-results li .result-type {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 0.5rem;
+    display: inline-block;
+}
+
+.search-results .no-results {
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 1rem 0.5rem;
+}
+
+.search-results .close-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+#landmarks-btn {
+    background: linear-gradient(135deg, #4a9eff, #357abd);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(74, 158, 255, 0.3);
+}
+
+#landmarks-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(74, 158, 255, 0.5);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    /* Canvas优化 - 移动设备 */
+    #earth-canvas {
+        /* 确保在移动设备上使用最佳渲染质量 */
+        image-rendering: auto;
+        image-rendering: -webkit-optimize-contrast;
+        touch-action: none; /* 防止移动端滚动干扰 */
+    }
+    
+    /* 信息面板按钮移动端适配 */
+    .info-toggle {
+        top: 10px;
+        left: 10px;
+        padding: 10px 16px;
+        font-size: 0.8rem;
+    }
+    
+    .info-icon {
+        font-size: 1rem;
+    }
+    
+    #info-panel {
+        top: 60px;
+        left: 10px;
+        right: 10px;
+        max-width: none;
+        padding: 1rem;
+    }
+    
+    #info-panel h1 {
+        font-size: 1.2rem;
+    }
+    
+    .controls-info p, .location-info p {
+        font-size: 0.8rem;
+    }
+    
+    /* 地标面板移动端适配 */
+    #landmarks-panel {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+        max-height: 60vh;
+        padding: 15px;
+    }
+    
+    /* 聊天按钮移动端适配 */
+    .chat-toggle {
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 16px;
+        font-size: 0.8rem;
+    }
+    
+    .chat-panel {
+        bottom: 80px;
+        right: 20px;
+        left: 20px;
+        width: auto;
+        height: 500px;
+    }
+    
+    .chat-header {
+        padding: 12px 16px;
+    }
+    
+    .chat-title h3 {
+        font-size: 1rem;
+    }
+    
+    .chat-messages {
+        padding: 15px;
+        gap: 12px;
+    }
+    
+    .message-content {
+        max-width: 85%;
+        padding: 10px 14px;
+        font-size: 0.85rem;
+    }
+    
+    .chat-input-container {
+        padding: 15px;
+    }
+    
+    #chat-input {
+        padding: 10px 14px;
+        font-size: 0.85rem;
+    }
+    
+    #send-btn {
+        width: 36px;
+        height: 36px;
+    }
+    
+    /* 地标弹窗移动端适配 */
+    .landmark-popup {
+        min-width: 280px;
+        max-width: 320px;
+        padding: 15px;
+        left: 10px !important;
+        right: 10px;
+        width: auto;
+        max-width: none;
+    }
+    
+    .popup-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .ask-ai-btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+}
+
+/* 工具提示样式 */
+.tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* 渐入动画 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#info-panel {
+    animation: fadeIn 1s ease-out;
+}
+
+/* 星空背景效果 */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+        radial-gradient(2px 2px at 40px 70px, #fff, transparent),
+        radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+        radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+        radial-gradient(2px 2px at 160px 30px, #ddd, transparent);
+    background-repeat: repeat;
+    background-size: 200px 100px;
+    animation: stars 20s linear infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes stars {
+    from { transform: translateY(0); }
+    to { transform: translateY(-100px); }
+}
+
+/* 地标信息弹窗样式 */
+.landmark-popup {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 20px;
+    min-width: 300px;
+    max-width: 350px;
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    z-index: 10000;
+    backdrop-filter: blur(20px);
+    box-shadow: 
+        0 0 30px rgba(0, 255, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.landmark-popup.show {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+    padding-right: 50px; /* 为关闭按钮留出空间 */
+}
+
+.popup-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: #00bfff;
+    text-shadow: 0 0 10px rgba(0, 191, 255, 0.5);
+    flex: 1;
+    margin-right: 10px; /* 确保与类型标签有间隔 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.popup-type {
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-left: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0; /* 防止被压缩 */
+    white-space: nowrap; /* 防止换行 */
+}
+
+.popup-type.city {
+    background: linear-gradient(45deg, #00bfff, #0080ff);
+    color: white;
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.4);
+}
+
+.popup-type.nature {
+    background: linear-gradient(45deg, #00ff7f, #00cc66);
+    color: white;
+    box-shadow: 0 0 15px rgba(0, 255, 127, 0.4);
+}
+
+.popup-type.heritage {
+    background: linear-gradient(45deg, #ffd700, #ffcc00);
+    color: #000;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+.popup-type.geology {
+    background: linear-gradient(45deg, #ff4500, #ff7034);
+    color: white;
+    box-shadow: 0 0 15px rgba(255, 69, 0, 0.4);
+}
+
+.popup-type.ocean {
+    background: linear-gradient(45deg, #0066cc, #0099ff);
+    color: white;
+    box-shadow: 0 0 15px rgba(0, 102, 204, 0.4);
+}
+
+.popup-type.meteorology {
+    background: linear-gradient(45deg, #9966ff, #cc99ff);
+    color: white;
+    box-shadow: 0 0 15px rgba(153, 102, 255, 0.4);
+}
+
+.popup-content {
+    margin-bottom: 15px;
+}
+
+.popup-content p {
+    margin: 0 0 10px 0;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.popup-coordinates {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.popup-actions {
+    margin-top: 15px;
+}
+
+.ask-ai-btn {
+    width: 100%;
+    padding: 12px 20px;
+    background: linear-gradient(45deg, #ff4757, #ff6b7d);
+    border: none;
+    border-radius: 25px;
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+        0 4px 15px rgba(255, 71, 87, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.ask-ai-btn:hover {
+    background: linear-gradient(45deg, #ff3742, #ff5722);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 20px rgba(255, 71, 87, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.ask-ai-btn:active {
+    transform: translateY(0);
+    box-shadow: 
+        0 2px 10px rgba(255, 71, 87, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.ask-ai-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.ask-ai-btn:hover::before {
+    left: 100%;
+}
+
+.popup-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.popup-close:hover {
+    background: rgba(255, 71, 87, 0.8);
+    border-color: #ff4757;
+    transform: scale(1.1);
+}
+
+/* 响应式弹窗 */
+@media (max-width: 768px) {
+    .landmark-popup {
+        min-width: 280px;
+        max-width: 320px;
+        padding: 15px;
+    }
+    
+    .popup-header {
+        padding-right: 45px; /* 移动端减少右侧留白 */
+    }
+    
+    .popup-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .popup-type {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        margin-left: 8px;
+    }
+    
+    .popup-close {
+        width: 28px;
+        height: 28px;
+        top: 12px;
+        right: 12px;
+        font-size: 1.1rem;
+    }
+    
+    .ask-ai-btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+    
+    #landmarks-panel {
+        max-width: 250px;
+        padding: 15px;
+    }
+}
+
+/* 弹窗进入动画 */
+@keyframes popupSlideIn {
+    from {
+        transform: scale(0.8) translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* 鼠标悬停标记点效果 */
+.marker-hover {
+    cursor: pointer;
+}
+
+/* 工具提示增强 */
+.enhanced-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1500;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    max-width: 200px;
+}
+
+/* 地标列表面板 */
+#landmarks-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    max-width: 350px;
+    max-height: 500px;
+    overflow-y: auto;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+#landmarks-panel.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(20px);
+}
+
+.landmarks-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.landmarks-panel-header h3 {
+    color: #4a9eff;
+    font-size: 1.2rem;
+    text-shadow: 0 0 10px rgba(74, 158, 255, 0.5);
+    margin: 0;
+}
+
+.landmarks-panel-header .close-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.landmarks-panel-header .close-btn:hover {
+    background: rgba(255, 71, 87, 0.8);
+    transform: scale(1.1);
+}
+
+/* 地标分类按钮 */
+.landmark-categories {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.category-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 5px 12px;
+    color: white;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.category-btn.active {
+    background: linear-gradient(135deg, #4a9eff, #357abd);
+    border-color: transparent;
+    box-shadow: 0 0 10px rgba(74, 158, 255, 0.3);
+}
+
+.category-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* 地标列表项 */
+#landmarks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.landmark-item {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+}
+
+.landmark-item:hover {
+    background: rgba(74, 158, 255, 0.1);
+    border-left-color: #4a9eff;
+    transform: translateX(3px);
+}
+
+.landmark-item h4 {
+    margin: 0 0 6px 0;
+    color: white;
+    font-size: 1rem;
+}
+
+.landmark-item h4.high-priority {
+    color: #4a9eff;
+    font-weight: bold;
+}
+
+.landmark-item p {
+    margin: 0 0 8px 0;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.4;
+}
+
+.landmark-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+}
+
+.landmark-type {
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.landmark-type.city {
+    background: rgba(0, 191, 255, 0.2);
+    color: rgba(0, 191, 255, 0.8);
+}
+
+.landmark-type.nature {
+    background: rgba(0, 255, 127, 0.2);
+    color: rgba(0, 255, 127, 0.8);
+}
+
+.landmark-type.heritage {
+    background: rgba(255, 215, 0, 0.2);
+    color: rgba(255, 215, 0, 0.8);
+}
+
+.landmark-type.geology {
+    background: rgba(255, 69, 0, 0.2);
+    color: rgba(255, 69, 0, 0.8);
+}
+
+.landmark-type.ocean {
+    background: rgba(0, 102, 204, 0.2);
+    color: rgba(0, 102, 204, 0.8);
+}
+
+.landmark-type.meteorology {
+    background: rgba(153, 102, 255, 0.2);
+    color: rgba(153, 102, 255, 0.8);
+}
+
+.landmark-coords {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.landmark-item {
+    padding: 10px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid #4a9eff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.landmark-item:hover {
+    background: rgba(74, 158, 255, 0.1);
+    transform: translateX(5px);
+}
+
+.landmark-item h4 {
+    margin: 0 0 5px 0;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.landmark-item p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+}
+
+/* 滚动条样式 */
+#landmarks-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+#landmarks-panel::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+#landmarks-panel::-webkit-scrollbar-thumb {
+    background: rgba(74, 158, 255, 0.5);
+    border-radius: 3px;
+}
+
+#landmarks-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(74, 158, 255, 0.8);
+}
+
+/* 响应式地标面板 */
+@media (max-width: 768px) {
+    #landmarks-panel {
+        top: 60px;  /* 增大上边距，避开信息按钮 */
+        right: 10px;
+        left: 10px;
+        width: auto;
+        max-height: 60vh;
+        padding: 15px;
+        z-index: 1100; /* 确保在信息按钮之上 */
+    }
+    
+    .landmarks-panel-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .landmarks-panel-header .close-btn {
+        width: 26px;
+        height: 26px;
+        font-size: 14px;
+    }
+    
+    .landmarks-content {
+        padding: 15px;
+    }
+    
+    .landmarks-categories {
+        gap: 6px;
+    }
+    
+    .category-btn {
+        font-size: 0.75rem;
+        padding: 5px 10px;
+    }
+}
+
+/* 聊天按钮样式 */
+.chat-toggle {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(135deg, #4a9eff, #357abd);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(74, 158, 255, 0.4);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.chat-toggle:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 25px rgba(74, 158, 255, 0.6);
+}
+
+.chat-toggle.active {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
+}
+
+.chat-icon {
+    font-size: 1.2rem;
+}
+
+.chat-text {
+    font-family: inherit;
+}
+
+/* 聊天面板样式 */
+.chat-panel {
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    width: 380px;
+    height: 600px;
+    background: rgba(0, 0, 0, 0.95);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+    z-index: 1500;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.chat-panel:not(.hidden) {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+.chat-panel.hidden {
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* 聊天头部 */
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, rgba(74, 158, 255, 0.8), rgba(74, 158, 255, 0.4));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px 20px 0 0;
+}
+
+.chat-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chat-avatar {
+    font-size: 1.5rem;
+}
+
+.chat-title h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: white;
+    font-weight: 600;
+}
+
+.chat-subtitle {
+    margin: 0;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.chat-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.chat-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+/* 消息区域 */
+.chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: rgba(74, 158, 255, 0.6);
+    border-radius: 3px;
+}
+
+/* 消息样式 */
+.message {
+    display: flex;
+    gap: 10px;
+    animation: messageSlideIn 0.3s ease-out;
+}
+
+.user-message {
+    flex-direction: row-reverse;
+}
+
+.message-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.user-message .message-avatar {
+    background: rgba(74, 158, 255, 0.3);
+}
+
+.message-content {
+    max-width: 80%;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 12px 16px;
+    border-radius: 18px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-message .message-content {
+    background: rgba(74, 158, 255, 0.3);
+    border-radius: 18px 18px 6px 18px;
+}
+
+.bot-message .message-content {
+    border-radius: 18px 18px 18px 6px;
+}
+
+.message-content p {
+    margin: 0;
+    color: white;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+/* 输入区域 */
+.chat-input-container {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chat-input-wrapper {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+#chat-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 25px;
+    padding: 12px 16px;
+    color: white;
+    font-size: 0.9rem;
+    outline: none;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+#chat-input:focus {
+    border-color: rgba(74, 158, 255, 0.6);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+#chat-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+#send-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4a9eff, #357abd);
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(74, 158, 255, 0.3);
+}
+
+#send-btn:hover:not(:disabled) {
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(74, 158, 255, 0.5);
+}
+
+#send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.send-icon {
+    font-size: 1rem;
+}
+
+/* 状态指示器 */
+.chat-status {
+    margin-top: 10px;
+    text-align: center;
+    display: none;
+}
+
+.typing-indicator {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.8rem;
+    animation: pulse 1.5s infinite;
+}
+
+/* 聊天控制按钮 */
+.chat-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.control-btn {
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+}
+
+.control-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.control-btn:active {
+    transform: translateY(0);
+}
+
+/* 动画 */
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .chat-toggle {
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 16px;
+        font-size: 0.8rem;
+    }
+    
+    .chat-panel {
+        bottom: 80px;
+        right: 20px;
+        left: 20px;
+        width: auto;
+        height: 500px;
+    }
+    
+    .chat-header {
+        padding: 12px 16px;
+    }
+    
+    .chat-title h3 {
+        font-size: 1rem;
+    }
+    
+    .chat-messages {
+        padding: 15px;
+        gap: 12px;
+    }
+    
+    .message-content {
+        max-width: 85%;
+        padding: 10px 14px;
+        font-size: 0.85rem;
+    }
+    
+    .chat-input-container {
+        padding: 15px;
+    }
+    
+    #chat-input {
+        padding: 10px 14px;
+        font-size: 0.85rem;
+    }
+    
+    #send-btn {
+        width: 36px;
+        height: 36px;
+    }
+} 
+
+/* 地标动画效果 */
+@keyframes markerPulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes markerGlow {
+    0% {
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(0, 191, 255, 0.8);
+    }
+    100% {
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    }
+}
+
+/* 高科技按钮效果 */
+.tech-button {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    border-radius: 25px;
+    padding: 10px 20px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.tech-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.tech-button:hover::before {
+    left: 100%;
+}
+
+.tech-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+} 
+
+.region-navigation {
+    margin-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 15px;
+}
+
+.region-navigation p {
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.region-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.region-buttons button {
+    padding: 6px 10px;
+    background-color: rgba(0, 140, 255, 0.6);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-size: 13px;
+}
+
+.region-buttons button:hover {
+    background-color: rgba(0, 120, 220, 0.8);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+} 
+
+.region-quick-nav {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    justify-content: center;
+}
+
+.region-quick-nav button {
+    padding: 5px 10px;
+    background-color: rgba(0, 140, 255, 0.6);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    flex-grow: 1;
+}
+
+.region-quick-nav button:hover {
+    background-color: rgba(0, 120, 220, 0.8);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+} 
+
+/* 地标弹窗样式改进 */
+.landmark-popup {
+    position: absolute;
+    width: 400px;
+    max-width: 90vw;
+    background: rgba(15, 25, 55, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    color: white;
+    z-index: 1000;
+    transform: translateY(20px) scale(0.95);
+    opacity: 0;
+    transition: transform 0.3s, opacity 0.3s;
+    overflow: hidden;
+    border: 1px solid rgba(100, 150, 255, 0.2);
+}
+
+/* 图片相关样式 */
+.landmark-image {
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    position: relative;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.landmark-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+}
+
+.landmark-image img:hover {
+    transform: scale(1.05);
+}
+
+/* 地标详细信息样式 */
+.landmark-details p {
+    margin: 0 0 15px 0;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+/* 加载状态样式 */
+.popup-content.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    text-align: center;
+}
+
+.popup-content .loading-spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(100, 150, 255, 0.3);
+    border-top: 3px solid rgba(100, 150, 255, 1);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+/* 了解更多按钮样式 */
+.show-more-btn {
+    padding: 8px 16px;
+    background-color: rgba(40, 80, 150, 0.8);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s, transform 0.2s;
+    margin-left: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.show-more-btn:hover {
+    background-color: rgba(50, 100, 180, 0.9);
+    transform: translateY(-2px);
+}
+
+.show-more-btn:active {
+    transform: translateY(0);
+}
+
+.popup-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .landmark-popup {
+        width: 320px;
+    }
+    
+    .landmark-image {
+        height: 150px;
+    }
+    
+    .popup-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .show-more-btn {
+        margin-left: 0;
+    }
+} 
+
+/* 参考链接样式 */
+.reference-links {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.reference-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #aaa;
+    margin-bottom: 5px;
+}
+
+.reference-links ul {
+    margin: 0;
+    padding: 0 0 0 20px;
+}
+
+.reference-links li {
+    margin-bottom: 5px;
+}
+
+.reference-links a {
+    color: #4a9eff;
+    text-decoration: none;
+    font-size: 13px;
+    word-break: break-all;
+}
+
+.reference-links a:hover {
+    color: #4a9eff;
+}
+
+.message-content p a {
+    color: #4a9eff;
+    text-decoration: underline;
+}
+
+.message-content p a:hover {
+    text-decoration: none;
+} 
+
+/* 推荐问题按钮样式 */
+.recommended-questions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.question-btn {
+    background: rgba(74, 158, 255, 0.15);
+    border: 1px solid rgba(74, 158, 255, 0.3);
+    border-radius: 8px;
+    padding: 10px 15px;
+    text-align: left;
+    color: #4a9eff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.question-btn:hover {
+    background: rgba(74, 158, 255, 0.25);
+    border-color: rgba(74, 158, 255, 0.5);
+    transform: translateY(-1px);
+}
+
+.question-btn:active {
+    transform: translateY(0px);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .recommended-questions {
+        gap: 8px;
+        margin-top: 12px;
+    }
+    
+    .question-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+} 

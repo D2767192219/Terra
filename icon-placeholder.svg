@@ -1,0 +1,40 @@
+<svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="earthGradient" cx="0.3" cy="0.3" r="0.7">
+      <stop offset="0%" style="stop-color:#87CEEB;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#4169E1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#191970;stop-opacity:1" />
+    </radialGradient>
+    <radialGradient id="bgGradient" cx="0.5" cy="0.5" r="0.8">
+      <stop offset="0%" style="stop-color:#4a9eff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#357abd;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="192" height="192" rx="42" fill="url(#bgGradient)"/>
+  
+  <!-- 地球本体 -->
+  <circle cx="96" cy="96" r="60" fill="url(#earthGradient)" stroke="#fff" stroke-width="2"/>
+  
+  <!-- 大陆1 - 亚洲 -->
+  <ellipse cx="110" cy="80" rx="25" ry="15" fill="#228B22" opacity="0.8"/>
+  
+  <!-- 大陆2 - 欧洲 -->
+  <ellipse cx="85" cy="75" rx="12" ry="8" fill="#32CD32" opacity="0.8"/>
+  
+  <!-- 大陆3 - 非洲 -->
+  <ellipse cx="90" cy="105" rx="10" ry="20" fill="#DAA520" opacity="0.8"/>
+  
+  <!-- 大陆4 - 美洲 -->
+  <ellipse cx="70" cy="90" rx="8" ry="25" fill="#8FBC8F" opacity="0.8"/>
+  
+  <!-- 大陆5 - 澳洲 -->
+  <ellipse cx="115" cy="115" rx="8" ry="5" fill="#CD853F" opacity="0.8"/>
+  
+  <!-- 光照效果 -->
+  <circle cx="96" cy="96" r="60" fill="none" stroke="#fff" stroke-width="1" opacity="0.3"/>
+  
+  <!-- 文字 -->
+  <text x="96" y="175" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="14" font-weight="bold">球球terra</text>
+</svg> 

@@ -1,0 +1,34 @@
+{
+  "name": "球球terra - 地球科学科普智能体",
+  "short_name": "球球terra",
+  "description": "一个互动的3D地球科学科普智能体，带你探索地球的奥秘",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0c0c",
+  "theme_color": "#4a9eff",
+  "orientation": "portrait-primary",
+  "categories": ["education", "entertainment"],
+  "lang": "zh-CN",
+  "icons": [],
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "screenshot2.png",
+      "sizes": "720x540", 
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "features": [
+    "Cross Platform",
+    "fast",
+    "simple"
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+} 
