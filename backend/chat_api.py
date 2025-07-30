@@ -13,8 +13,9 @@ router = APIRouter(prefix="/api/chat", tags=["智能体对话"])
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-QIANFAN_TOKEN = 'Bearer bce-v3/ALTAK-1oMR2qNcjrYEgFF5lwRuf/57a449fdca9e46e5b3cfc1c7867ddfed59c08558'
-DEFAULT_APP_ID = 'ac6acc7c-9e7c-4909-8bc0-5ca667a5e0b6'
+# 从环境变量读取配置，如果没有则使用默认值（仅用于开发测试）
+QIANFAN_TOKEN = os.getenv('QIANFAN_TOKEN', '')
+DEFAULT_APP_ID = os.getenv('QIANFAN_APP_ID', '')
 
 # 简单的对话存储（生产环境应使用数据库）
 conversation_storage = {}
@@ -88,11 +89,18 @@ class AgentChatResponse(BaseModel):
 def get_qianfan_client(token: Optional[str] = None) -> QianfanClient:
     """获取千帆客户端实例"""
     auth_token = token or QIANFAN_TOKEN
+    
+    # 检查配置
     if not auth_token:
         raise HTTPException(
-            status_code=400, 
-            detail="缺少授权令牌。请配置QIANFAN_TOKEN环境变量或运行setup_ai.py进行配置。"
+            status_code=500, 
+            detail="AI服务未配置。请创建.env文件并配置QIANFAN_TOKEN环境变量。"
         )
+    
+    # 确保token格式正确
+    if not auth_token.startswith('Bearer '):
+        auth_token = f'Bearer {auth_token}'
+    
     return create_qianfan_client(auth_token)
 
 # 前端兼容接口 - 直接处理chat.js的调用
@@ -113,15 +121,15 @@ async def frontend_chat(request: FrontendChatRequest):
         if not QIANFAN_TOKEN:
             logger.error("千帆授权令牌未配置")
             raise HTTPException(
-                status_code=400, 
-                detail="服务器未配置AI授权令牌。请联系管理员配置QIANFAN_TOKEN环境变量。"
+                status_code=500,
+                detail="AI服务未配置。请创建.env文件并配置QIANFAN_TOKEN环境变量。"
             )
         
         if not DEFAULT_APP_ID:
             logger.error("千帆应用ID未配置")
             raise HTTPException(
-                status_code=400,
-                detail="服务器未配置AI应用ID。请联系管理员配置QIANFAN_APP_ID环境变量。"
+                status_code=500,
+                detail="AI服务未配置。请创建.env文件并配置QIANFAN_APP_ID环境变量。"
             )
         
         # 创建客户端
