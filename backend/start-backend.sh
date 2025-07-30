@@ -45,31 +45,22 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# 检查环境变量配置
+echo "🔍 检查AI服务配置..."
+python check_config.py
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ AI服务配置不完整，无法启动服务器"
+    echo "请先配置百度千帆API，然后重新启动"
+    deactivate
+    exit 1
+fi
+
 # 获取本机IP地址
 LOCAL_IP=$(ifconfig | grep "inet " | grep -v 127.0.0.1 | head -1 | awk '{print $2}')
 
-echo "✅ 依赖安装完成"
+echo "✅ 配置检查完成"
 echo ""
-
-# 检查是否配置了AI
-if [ ! -f ".env" ]; then
-    echo "⚠️ 未检测到AI配置文件"
-    echo "🔧 请先配置百度千帆API："
-    echo "   python setup_ai.py"
-    echo ""
-    echo "📚 或者查看配置说明："
-    echo "   cat config_instructions.md"
-    echo ""
-    read -p "是否现在配置AI？(y/N): " configure_ai
-    if [ "$configure_ai" = "y" ] || [ "$configure_ai" = "Y" ]; then
-        python setup_ai.py
-        if [ $? -ne 0 ]; then
-            echo "❌ AI配置失败，退出启动"
-            deactivate
-            exit 1
-        fi
-    fi
-fi
 
 echo "🚀 启动FastAPI后端服务器..."
 echo "📍 本地API: http://localhost:8000/api"

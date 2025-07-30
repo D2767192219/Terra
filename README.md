@@ -35,6 +35,43 @@
 
 ## 🚀 快速开始
 
+### 环境配置
+
+**首次使用需要配置AI服务：**
+
+**方法一：快速配置（推荐）**
+```bash
+cd backend
+python setup_env.py
+```
+
+**方法二：手动配置**
+1. 复制环境变量模板：
+```bash
+cd backend
+cp env_template.txt .env
+```
+
+2. 编辑 `.env` 文件，填入你的百度千帆API配置：
+```bash
+# 应用ID - 从个人空间-应用-应用ID获取
+QIANFAN_APP_ID=your-app-id-here
+
+# 授权令牌 - 从应用工作台获取的密钥
+QIANFAN_TOKEN=your-bearer-token-here
+```
+
+3. 获取配置信息：
+   - 访问 [百度千帆控制台](https://console.bce.baidu.com/qianfan/overview)
+   - 创建应用并获取应用ID
+   - 获取API密钥作为授权令牌
+
+**验证配置：**
+```bash
+cd backend
+python check_config.py
+```
+
 ### 方式一：完整应用（推荐）
 
 **Linux/Mac:**
@@ -142,6 +179,7 @@ cd backend
 2. 点击地址栏右侧的安装按钮
 3. 确认安装到桌面
 
+
 ### 移动端
 1. 在Chrome/Safari中访问应用
 2. 点击"添加到主屏幕"
@@ -149,11 +187,14 @@ cd backend
 
 ## ⚙️ 配置说明
 
+### 安全提醒
+⚠️ **重要：** 请确保 `.env` 文件不会被上传到GitHub等公开仓库，该文件包含敏感的API密钥信息。
+
 ### API配置
-如需修改AI服务配置，请编辑 `backend/main.py` 中的以下变量：
-```python
-APP_ID = "your-app-id"
-AUTHORIZATION = "your-authorization-token"
+如需修改AI服务配置，请编辑 `backend/.env` 文件中的以下变量：
+```bash
+QIANFAN_APP_ID=your-app-id
+QIANFAN_TOKEN=your-authorization-token
 ```
 
 ### 端口配置
@@ -198,6 +239,16 @@ AUTHORIZATION = "your-authorization-token"
    ./start.sh
    ```
 
+5. **AI配置问题**
+   ```bash
+   # 检查配置
+   cd backend
+   python check_config.py
+   
+   # 重新配置
+   python setup_env.py
+   ```
+
 ## 📄 许可证
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
@@ -208,4 +259,4 @@ AUTHORIZATION = "your-authorization-token"
 
 ---
 
-💡 **提示**: 这是一个教育项目，展示了如何将3D可视化与AI对话相结合，创造有趣的学习体验。 
+💡 **提示**: 这是一个教育项目，展示了如何将3D可视化与AI对话相结合，创造有趣的学习体验。

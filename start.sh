@@ -48,7 +48,18 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo "✅ 依赖安装完成"
+# 检查环境变量配置
+echo "🔍 检查AI服务配置..."
+python check_config.py
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ AI服务配置不完整，无法启动服务器"
+    echo "请先配置百度千帆API，然后重新启动"
+    deactivate
+    exit 1
+fi
+
+echo "✅ 配置检查完成"
 echo ""
 echo "🚀 启动FastAPI服务器..."
 echo "📍 访问地址: http://localhost:8000"
