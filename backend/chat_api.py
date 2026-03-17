@@ -4,7 +4,11 @@ from typing import Optional, Dict, Any
 import os
 import logging
 import traceback
+from dotenv import load_dotenv
 from qianfan_client import QianfanClient, create_qianfan_client
+
+# 加载环境变量
+load_dotenv()
 
 # 创建路由器
 router = APIRouter(prefix="/api/chat", tags=["智能体对话"])
@@ -259,6 +263,8 @@ async def create_conversation(request: ConversationRequest):
         # 获取参数
         app_id = request.app_id or DEFAULT_APP_ID
         token = request.token or QIANFAN_TOKEN
+        
+        logger.info(f"创建对话 - app_id: {app_id}, token: {token[:20] if token else 'None'}...")
         
         if not token:
             raise HTTPException(status_code=400, detail="缺少授权令牌")

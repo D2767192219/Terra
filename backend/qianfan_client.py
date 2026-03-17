@@ -3,6 +3,10 @@ import json
 import logging
 from typing import Optional, Dict, Any, Iterator
 import re
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
 
 class QianfanClient:
     """百度千帆API客户端"""
@@ -47,6 +51,9 @@ class QianfanClient:
         
         try:
             self.logger.info(f"创建对话，app_id: {app_id}")
+            self.logger.info(f"请求URL: {url}")
+            self.logger.info(f"请求headers: {self.headers}")
+            self.logger.info(f"请求payload: {payload}")
             
             response = requests.post(
                 url, 
@@ -54,6 +61,9 @@ class QianfanClient:
                 data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
                 timeout=30
             )
+            
+            self.logger.info(f"响应状态码: {response.status_code}")
+            self.logger.info(f"响应内容: {response.text[:500]}")
             
             response.raise_for_status()
             result = response.json()
